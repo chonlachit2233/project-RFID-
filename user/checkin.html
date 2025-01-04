@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-in</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-top: 20px;
+        }
+        select, input[type="text"], button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px;
+            width: 80%;
+            max-width: 400px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #username {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>เช็คอินกิจกรรม</h1>
+    <p>กรุณาใส่รหัส RFID เพื่อแสดงชื่อที่บันทึก</p>
+
+    <!-- ฟอร์มสำหรับกรอกรหัส RFID -->
+    <form id="checkinForm">
+        <label for="rfid">สแกนหรือกรอกรหัส RFID:</label><br>
+        <input type="text" id="rfid" name="rfid" placeholder="กรุณาสแกนหรือกรอกรหัส RFID" required><br>
+
+        <!-- แสดงชื่อที่ดึงมาจากระบบ -->
+        <p id="username">ชื่อ: -</p>
+
+        <label for="activity">เลือกกิจกรรม:</label><br>
+        <select id="activity" name="activity" required disabled>
+            <option value="" disabled selected>-- กรุณาเลือกกิจกรรม --</option>
+            <option value="กิจกรรมวันวิทยาศาสตร์เเห่งชาติ">กิจกรรมวันวิทยาศาสตร์เเห่งชาติ</option>
+            <option value="กิจกรรมวันครู">กิจกรรมวันครู</option>
+            <option value="กิจกรรมวันคริสมาสตร์">กิจกรรมวันคริสมาสตร์</option>
+        </select><br>
+
+        <button type="submit" disabled>เช็คอิน</button>
+    </form>
+
+    <script>
+        const rfidInput = document.getElementById('rfid');
+        const usernameDisplay = document.getElementById('username');
+        const activitySelect = document.getElementById('activity');
+        const submitButton = document.querySelector('button[type="submit"]');
+
+        // ตรวจสอบ RFID ทุกครั้งที่เปลี่ยนค่า
+        rfidInput.addEventListener('input', async () => {
+            const rfid = rfidInput.value.trim();
+
+            if (rfid) {
+                const response = await fetch(`check_user.php?rfid=${rfid}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    usernameDisplay.textContent = `ชื่อ: ${result.name}`;
+                    activitySelect.disabled = false;
+                    submitButton.disabled = false;
+                } else {
+                    usernameDisplay.textContent = "ชื่อ: ไม่พบข้อมูลหรือสถานะไม่ถูกต้อง";
+                    activitySelect.disabled = true;
+                    submitButton.disabled = true;
+                }
+            } else {
+                usernameDisplay.textContent = "ชื่อ: -";
+                activitySelect.disabled = true;
+                submitButton.disabled = true;
+            }
+        });
+
+        // ส่งข้อมูลเมื่อเช็คอิน
+        document.getElementById('checkinForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const rfid = rfidInput.value.trim();
+            const activity = activitySelect.value;
+
+            const formData = new FormData();
+            formData.append('rfid', rfid);
+            formData.append('activity', activity);
+
+            const response = await fetch('checkin.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            alert(result.message);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลงทะเบียน</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-top: 20px;
+        }
+        input[type="text"], button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px;
+            width: 80%;
+            max-width: 400px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #aaa;
+        }
+        label {
+            display: block;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>ลงทะเบียน</h1>
+    <form id="registerForm">
+        <input type="text" id="name" name="name" placeholder="กรอกชื่อของคุณ" required><br>
+        <input type="text" id="rfid" name="rfid" placeholder="กรอกรหัส RFID" required><br>
+
+  
+        <label>
+            <input type="checkbox" id="confirm" name="confirm"> 
+            ข้าพเจ้ายืนยันว่าข้อมูลนี้เป็นความจริง
+        </label>
+
+        <button type="submit" id="submitButton" disabled>ลงทะเบียน</button>
+    </form>
+
+    <script>
+        const confirmCheckbox = document.getElementById('confirm');
+        const submitButton = document.getElementById('submitButton');
+
+        // เปิดใช้งานปุ่มเมื่อผู้ใช้ติ๊ก Checkbox
+        confirmCheckbox.addEventListener('change', () => {
+            submitButton.disabled = !confirmCheckbox.checked;
+        });
+
+        // ฟังก์ชัน Text-to-Speech
+        function speakMessage(message) {
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'th-TH'; // กำหนดเป็นภาษาไทย
+            synth.speak(utterance);
+        }
+
+        // จัดการส่งฟอร์ม
+        document.getElementById('registerForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const rfid = document.getElementById('rfid').value.trim();
+           
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('rfid', rfid);
+
+            formData.append('status', confirmCheckbox.checked ? 1 : 0); // ส่งสถานะ 1 ถ้ายืนยันข้อมูลจริง
+
+            const response = await fetch('register.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            alert(result.message);
+
+            if (result.success) {
+                // ใช้เสียง AI พูดข้อความ
+                speakMessage("บันทึกเรียบร้อยแล้ว ");
+
+                // เคลียร์ฟอร์มเมื่อสำเร็จ
+                document.getElementById('registerForm').reset();
+                submitButton.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
